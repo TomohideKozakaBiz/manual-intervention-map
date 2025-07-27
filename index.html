@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>手動介入記録</title>
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.l.js
+  https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    #map { width: 100%; height: 80vh; }
+    #form { padding: 10px; background: #f0f0f0; }
+    button { margin: 5px; padding: 10px; }
+    input { margin: 5px; padding: 5px; }
+  </style>
+</head>
+<body>
+  <div id="form">
+    <label>運行便ID: <input type="text" id="routeId" placeholder="例：便001" /></label><br/>
+    <button onclick="setReason('信号対応')">信号対応</button>
+    <button onclick="setReason('交通回避')">交通回避</button>
+    <button onclick="setReason('ルート変更')">ルート変更</button>
+  </div>
+  <div id="map"></div>
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoidG9tYml6IiwiYSI6ImNtZGw3OXhuMzEzc2MybXEwbHd4anRnczUifQ.UgvYt0aBnqIyN5aI5lu_5g';
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [139.767, 35.681],
+      zoom: 14
+    });
+
+    let selectedReason = '';
+    function setReason(reason) {
+      selectedReason = reason;
+      alert(`選択された要因: ${reason}`);
+    }
+
+    map.on('click', function (e) {
+      const routeId = document.getElementById('routeId').value;
+      if (!selectedReason || !routeId) {
+        alert("運行便IDと要因を選択してください");
+        return;
+      }
+
+      const lng = e.lngLat.lng;
+      const lat = e.lngLat.lat;
+
+      new mapboxgl.Marker().setLngLat([lng, lat]).addTo(map);
+
+      fetch('https://script.google.com/macros/s/AKfycbxTiN2Rs4rp8RjupqPBBlBUb6r64DyjAtmFut8ChL7h03xSN58mdnVQOrl_23qWCo-iEQ/exec', {
+        method: 'POST',
+        body: JSON.stringify({ lat, lng, reason: selectedReason, routeId }),
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(response => response.text())
+      .then(data => console.log("送信結果:", data))
+      .catch(error => console.error("送信エラー:", error));
+    });
+  </script>
+</body>
+</html>
